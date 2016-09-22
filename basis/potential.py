@@ -38,6 +38,14 @@ class Potential(object):
 
         self._parse_config()
 
+
+    def __getattr__(self,attr):
+        if attr in self.params:
+            return self.params[attr]
+        else:
+            emsg = "{} is not an attribute of Potential objects."
+            raise AttributeError(emsg.format(attr))
+        
     def __call__(self, value):
         """Evaluates te potential for the given value(s).
 
@@ -69,7 +77,7 @@ class Potential(object):
             return 0.
                 
 
-    def __mul__(self,value):
+    def __mul__(self,value): # pragma: no cover
         """Increases the strength of the potential by 'value'.
 
         Args:
@@ -104,6 +112,10 @@ class Potential(object):
             if "numpy" in sfunc:
                 import numpy as np
                 self.params["numpy"] = np
+
+            if "operator" in sfunc:
+                import operator
+                self.params["operator"] = operator
                 
             xi, xf = eval(domain, self.params)
             function = eval(sfunc, self.params)

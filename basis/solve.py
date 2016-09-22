@@ -54,7 +54,8 @@ def _parser_options():
     return args
 
 def run(args):
-    print("RUNNING",args)
+
+    return 0
 
 if __name__ == '__main__': # pragma: no cover
     run(_parser_options())

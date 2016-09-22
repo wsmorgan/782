@@ -1,5 +1,3 @@
-tox
 numpy
 termcolor
-pyparsing
 argparse
