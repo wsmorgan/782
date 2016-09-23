@@ -6,6 +6,29 @@ from basis.potential import Potential
 import numpy as np
 import sys
 
+def test_adjust_potential():
+    """Tests that the adjust potential won't assign values to a parameter
+    that doesn't exist.
+    """
+    pot = Potential("potentials/kp.cfg")
+        
+    params = [(2, 1, -15., 10, 100),
+              (np.pi, np.pi/2, -np.sqrt(2), 10, 23)]
+    
+    for w, s, V0, num, N in params:
+        pot.adjust_potential(s=s, w=w, v0=V0, n=num)
+        pot.adjust_potential(t=s, w=w, v0=V0, n=num)
+    
+
+def test_parse_regions():
+    """Tests the _parse_regions code value error and importation of numpy.
+   """
+
+    pot = Potential("potentials/kp_2.cfg")
+    with pytest.raises(ValueError):
+        pot = Potential("potentials/kp_3.cfg")
+
+
 def test_getattr():
     """Tests the attribute re-routing to Potential.params.
     """
@@ -21,11 +44,6 @@ def test_KP():
     """Tests the Kronig Penny type potential.
     """
 
-    print(sys.version_info)
-    print(sys.version_info > (3,0))
-    # if sys.version_info > (3,0):
-    #     pot = Potential("potentials/kp_3.cfg")
-    # else:
     pot = Potential("potentials/kp.cfg")
         
     params = [(2, 1, -15., 10, 100),
@@ -45,7 +63,6 @@ def test_KP():
         assert pot(w*num - w +s/2.) == V0
         with pytest.raises(ValueError):
             pot("a")
-    pass
 
 def test_sho():
     """Tests the SHO potential.

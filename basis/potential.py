@@ -126,9 +126,9 @@ class Potential(object):
         parameters and function call.
         """
 
-        try:
+        try: # pragma: no cover
             from ConfigParser import ConfigParser
-        except ImportError:
+        except ImportError: # pragma: no cover
             from configparser import ConfigParser
 
         self.parser = ConfigParser()
