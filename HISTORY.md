@@ -1,5 +1,11 @@
 # Revision History for "782"
 
+## Revision 0.0.3
+
+- Added the hamiltonian.py file that defines a Hamiltonian class and
+  finds its eigenvalues and eigenvectors.
+- Removed the __mul__ method from potentials.py.
+
 ## Revision 0.0.2
 
 - Added the last unit tests for the initial repository. The code is

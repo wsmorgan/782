@@ -75,17 +75,6 @@ class Potential(object):
                     return function
         else:
             return 0.
-                
-
-    def __mul__(self,value): # pragma: no cover
-        """Increases the strength of the potential by 'value'.
-
-        Args:
-            value (float): how much to multiply by.
-        """
-        #Do I want to overwrite the value of 'strength' or return a new
-        #Potential instance?
-        pass
 
     def _parse_params(self):
         """Extracts the potential parameters from the specified config
