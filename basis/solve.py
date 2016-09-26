@@ -1,7 +1,50 @@
 #!/usr/bin/python
 from basis import msg
+from basis.hamiltonian import Hamiltonian
+
+def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = False, outfile=None):
+    """Solves the system for the given potential and the desired number of
+    basis functions. Output is written to file.
+
+    Args:
+        potcfg (str): The path to the `pot.cfg` file.
+        n_basis (int): The number of basis functions to use in the solution.
+        n_solutions (int): The number of solutions to be returned.
+        xl (float, optional): The left most edge of the potential if different 
+            from that stored in the `pot.cfg` file.
+        xr (float, optional): The right most edge of the potential if different 
+            from that stored in the `pot.cfg` file.
+        plot_f (bool, optional): True if the system is going to be plotted.
+        outfile (str, optional): The path to the desired output file.
+
+    Returns:
+       Output is saved to a csv file `1D_potential_sol.csv". If plot_f = 
+           True a plot window is returned.
+    """
+
+    ham = Hamiltonian(potcfg, n_basis, xl, xr)
+    eigen_vals = ham.eigenvals[:n_solutions]
+    eigen_vecs = ham.eigenvecs[:n_solutions]
+
+    if outfile == None:
+        outfile = "1D_potential_sol.csv"
+
+    with open(outfile,"w+") as outf:
+        outf.write("Eigenval      Eigenvec\n")
+
+        for i in range(n_solutions):
+            temp = [str(eigen_vals[i])+"      "]
+            for j in range(len(eigen_vecs)):
+                temp.append(str(eigen_vecs[i][j]))
+
+            outf.write(" ".join(temp)+"\n")
+
+    if plot_f:
+        import matplotlib as plt
+        pass
 
 def examples():
+
     """Prints examples of using the script to the console using colored output.
     """
     script = "BASIS: 1D quantum potential solver using basis expansion."
@@ -31,7 +74,15 @@ script_options = {
                   help=("Plot the solution.")),
     "-potential": dict(help=("Path to the file that has the potential parameters.")),
     "-outfile": dict(default="output.dat",
-                     help="Override the default output file nome.")
+                     help="Override the default output file nome."),
+    "-solutions": dict(default = 10,
+                       help="The number of solutions to be written to file."),
+    "-left_edge": dict(default = None,
+                       help="Override the left most edge of the potential "
+                       "that has diffined in potential file."),
+    "-right_edge": dict(default = None,
+                       help="Override the right most edge of the potential "
+                       "that has diffined in potential file.")    
     }
 """dict: default command-line arguments and their
     :meth:`argparse.ArgumentParser.add_argument` keyword arguments.
@@ -55,7 +106,16 @@ def _parser_options():
 
 def run(args):
 
-    return 0
+    if not args["potential"]:
+        msg.err("A potential file must be provided using the -potential flag.")
+        exit()
 
+    if args["plot"]:
+        _solve_system(args["potential"], args["N"], args["solutions"], xl=args["left_edge"]
+                      ,xr=args["right_edge"], outfile = args["outfile"], plot_f = True)
+    else:
+        _solve_system(args["potential"], args["N"], args["solutions"], xl=args["left_edge"]
+                      ,xr=args["right_edge"], outfile = args["outfile"])
+    
 if __name__ == '__main__': # pragma: no cover
     run(_parser_options())

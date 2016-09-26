@@ -1,8 +1,8 @@
 """Methods used to setup the Hamiltonian of the system."""
 
-import nupmy as np
+import numpy as np
 from basis import msg
-from basis.potetial import Potential
+from basis.potential import Potential
 
 class Hamiltonian(object):
     """Represents the Hamliltonian for a 1D quantum potential.
@@ -37,15 +37,14 @@ class Hamiltonian(object):
         self.pot = Potential(potcfg)
 
         if xi == None:
-            xi = _find_xi()
-        if xf = None:
-            xf = _find_xf():
+            xi = self._find_xi()
+        if xf == None:
+            xf = self._find_xf()
 
         self.domain = [xi,xf]
-        self.ham = self._construct_ham
-        eigensys = np.eigh(self.ham).tolist()
-        self.eigenvecs = eigensys[0]
-        self.eigenvals = eigensys[1]
+        self.ham = None
+        self._construct_ham(n_basis)
+        self.eigenvals, self.eigenvecs = np.linalg.eigh(self.ham)
 
     # def __call__(self, value):
     #     """Returns the desired row entries for the hamiltonian.
@@ -84,38 +83,40 @@ class Hamiltonian(object):
               in the expansion.
         """
         
-        ham = np.array()
+        ham = []
         xr, xv, width_b, width_vac = self._find_xrs()
         for n in range(n_basis):
             temp = []
             for m in range(n_basis):
                 if n == m:
-                    hnm = self._fnn(n, xr, width_b)
-                    en = (np.pi**2)*(n**2)/(sum(self.domain)**2)
+                    hnm = self._fnn((n+1), xr, width_b)
+                    en = (np.pi**2)*((n+1)**2)/(abs(self.domain[1] -self.domain[0])**2)
                     if width_vac != None:
-                        hnm += self._fnn(n,xv, width_vac)
+                        hnm += self._fnn((n+1),xv, width_vac)
                 else:
-                    hnm = self._fnm(n,m,xr,width_b)
+                    hnm = self._fnm((n+1),(m+1),xr,width_b)
                     en = 0
                     if width_vac != None:
                         hnm += self._fnm(n,m,xv, width_vac)
                 temp.append(en+hnm)
-            ham.append([temp])
+            ham.append(temp)
 
-        self.ham = ham
+        self.ham = np.array(ham)
                 
     def _find_xrs(self):
         """Finds the mid points of the potential bariers.
 
         Returns: 
-            tuple of lists and ints: The list of the barriers in the
+            tuple of lists: The list of the barriers in the
                 middle of the well, the list of the barriers 
                 that define the vaccum region, the widths of the barriers
-                in the well and the width of the vaccum region barriers.
+                in the well and the widths of the vaccum region barriers.
         """
 
         xr = []
+        width_b = []
         xv = []
+        width_vac = []
         
         # We need to find the best number of divisions for the system
         # to make sure we aren't missing any bumps. For the average
@@ -124,46 +125,50 @@ class Hamiltonian(object):
         # need to use a smaller iterative size.
         temp = []
         for key in self.pot.params:
-            if key != '__builtins__':
+            if key != '__builtins__' and key != 'operator':
                 temp.append(abs(self.pot.params[key]))
         if min(temp) > 1:
             divs = 0.1
         else:
             divs = min(temp)/2.0
+
             
-        xs = np(self.domain[0],self.domain[1]+divs,divs)
+        xs = np.arange(self.domain[0],self.domain[1]+divs,divs)
 
         # Now we need to scan through the potential to find the bumps.
-        Vt = [self.pot(xi),xi]
+        Vt = [self.pot(xs[0]),xs[0]]
         for x in xs:
             if self.pot(x) > Vt[0]:
                 Vt = [self.pot(x),x]
             elif self.pot(x) < Vt[0]:
                 if 0 in Vt:
                     VL = Vt
-                elif (abs(self.domain[0])+abs(self.domain[1])) in Vt:
-                    VR = Vt
                 else:
                     xr.append(np.mean(Vt[1:]))
-                    width_b = abs(Vt[-1]) + divs
+                    width_b.append(abs(Vt[-1]-Vt[1]) + divs)
             else:
                 Vt.append(x)
-
+            VR = Vt
         # If the ends are widder than the middle then we have a
         # defined vaccum in those regions.
-        width_vac = abs(VL[-1]) + divs
-        if width_vac != width_b or width_vac != width_b/2.:
-            xv.append(VL[-1]-VL[-1]/1000,VR[1])
-        elif width_vac != width_b/2.:
+        temp_width_vac = abs(VL[-1]) + divs
+        if temp_width_vac not in width_b and temp_width_vac*2 not in width_b:
+            xv.append(VL[-1]-VL[-1]/1000)
+            xv.append(VR[1])
+            width_vac.append(VL[-1])
+            width_vac.append(VR[1])
+        elif temp_width_vac*2 not in width_b:
             xr.append(np.mean(VL[1:]))
+            width_b.append(abs(VL[-1]-VL[1]) + divs)
             xr.append(np.mean(VR[1:]))
-            width_vac = None
+            width_b.append(abs(VR[-1] - VR[1])+divs)
         else:
             xr.append(VL[1])
+            width_b.append(abs(VL[-1]-VL[1]) + divs)
             xr.append(VR[-1])
-            width_vac = None
+            width_b.append(abs(VR[-1] - VR[1])+divs)
 
-        return xs, xv, width_b, width_vac
+        return xr, xv, width_b, width_vac
         
 
     def _fnn(self,n, xr, b):
@@ -173,20 +178,21 @@ class Hamiltonian(object):
         Args:
             n (int): The column and row number for the matrix element.
             xr (list of float): The midpoints of the potential barriers.
-            b (float): The width of the potential barrier.
+            b (list of float): The width of the potential barriers.
 
         Returns:
             float: The value of the sum of all hnm from the paper.
         """
 
         hnm = 0
-        L = abs(self.domain[0]) + abs(self.domain[1])
-        for x in xr:
-            spb = x + b/2.
-            smb = x - b/2.
+        L = abs(self.domain[1] - self.domain[0])
+
+        for i_x in range(len(xr)):
+            spb = xr[i_x] + b[i_x]/2.
+            smb = xr[i_x] - b[i_x]/2.
             fnnp = spb/L - np.sin(2*n*np.pi*spb/L)/(2*np.pi*n)
             fnnm = smb/L - np.sin(2*n*np.pi*smb/L)/(2*np.pi*n)
-            hnm += self.pot(x)(fnnp-fnnm)
+            hnm += self.pot(xr[i_x])*(fnnp-fnnm)
 
         return hnm
 
@@ -204,12 +210,12 @@ class Hamiltonian(object):
             float: The value of the sum of all hnm from the paper.
         """
         hnm = 0
-        L = abs(self.domain[0]) + abs(self.domain[1])
-        for x in xr:
-            spb = x + b/2.
-            smb = x - b/2.
+        L = abs(self.domain[1] - self.domain[0])
+        for x_i in range(len(xr)):
+            spb = xr[x_i] + b[x_i]/2.
+            smb = xr[x_i] - b[x_i]/2.
             fnnp = np.sin((m-n)*np.pi*spb*L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*spb/L)/(np.pi*(n+m))
             fnnm = np.sin((m-n)*np.pi*smb*L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*smb/L)/(np.pi*(n+m))
-            hnm += self.pot(x)(fnnp-fnnm)
+            hnm += self.pot(xr[x_i])*(fnnp-fnnm)
 
         return hnm

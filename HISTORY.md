@@ -1,5 +1,10 @@
 # Revision History for "782"
 
+## Revision 0.0.4
+
+- Fixed a number of bugs in hamiltonian.py that prevented it from running.
+- Updated solve.py to create and solve the system using the Hamiltonian class.
+
 ## Revision 0.0.3
 
 - Added the hamiltonian.py file that defines a Hamiltonian class and
