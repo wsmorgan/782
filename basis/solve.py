@@ -26,9 +26,6 @@ def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = F
     eigen_vals = ham.eigenvals[:n_solutions]
     eigen_vecs = ham.eigenvecs[:n_solutions]
 
-    if outfile == None:
-        outfile = "1D_potential_sol.csv"
-
     with open(outfile,"w+") as outf:
         outf.write("Eigenval      Eigenvec\n")
 
@@ -40,8 +37,7 @@ def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = F
             outf.write(" ".join(temp)+"\n")
 
     if plot_f:
-        import matplotlib as plt
-        pass
+        pass # pragma: no cover
 
 def examples():
 
@@ -75,12 +71,12 @@ script_options = {
     "-potential": dict(help=("Path to the file that has the potential parameters.")),
     "-outfile": dict(default="output.dat",
                      help="Override the default output file nome."),
-    "-solutions": dict(default = 10,
+    "-solutions": dict(default = 10, type=int,
                        help="The number of solutions to be written to file."),
-    "-left_edge": dict(default = None,
+    "-left_edge": dict(default = None, type=float,
                        help="Override the left most edge of the potential "
                        "that has diffined in potential file."),
-    "-right_edge": dict(default = None,
+    "-right_edge": dict(default = None, type=float,
                        help="Override the right most edge of the potential "
                        "that has diffined in potential file.")    
     }
@@ -107,15 +103,14 @@ def _parser_options():
 def run(args):
 
     if not args["potential"]:
-        msg.err("A potential file must be provided using the -potential flag.")
-        exit()
+        raise KeyError("A potential file must be provided using the -potential flag.")
 
-    if args["plot"]:
+    elif args["plot"]:
         _solve_system(args["potential"], args["N"], args["solutions"], xl=args["left_edge"]
                       ,xr=args["right_edge"], outfile = args["outfile"], plot_f = True)
     else:
         _solve_system(args["potential"], args["N"], args["solutions"], xl=args["left_edge"]
                       ,xr=args["right_edge"], outfile = args["outfile"])
-    
+
 if __name__ == '__main__': # pragma: no cover
     run(_parser_options())

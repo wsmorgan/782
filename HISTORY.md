@@ -1,5 +1,14 @@
 # Revision History for "782"
 
+## Revision 0.0.5
+
+- Fixed another issue in hamiltonian.py to generalize the construction
+  of the rectangle integration method to more potentials.
+- Added new tests of solve.py and hamiltonian.py.
+- Changed the error message in solve.py to a KeyError.
+- Removed the redundant default output file name in solve.py's _solve_system.
+- Increased number of devisions used for scanning the potential.
+
 ## Revision 0.0.4
 
 - Fixed a number of bugs in hamiltonian.py that prevented it from running.

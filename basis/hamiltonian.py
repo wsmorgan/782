@@ -44,6 +44,7 @@ class Hamiltonian(object):
         self.domain = [xi,xf]
         self.ham = None
         self._construct_ham(n_basis)
+
         self.eigenvals, self.eigenvecs = np.linalg.eigh(self.ham)
 
     # def __call__(self, value):
@@ -84,20 +85,19 @@ class Hamiltonian(object):
         """
         
         ham = []
-        xr, xv, width_b, width_vac = self._find_xrs()
+        xr, width_b = self._find_xrs()
+
         for n in range(n_basis):
             temp = []
             for m in range(n_basis):
                 if n == m:
                     hnm = self._fnn((n+1), xr, width_b)
                     en = (np.pi**2)*((n+1)**2)/(abs(self.domain[1] -self.domain[0])**2)
-                    if width_vac != None:
-                        hnm += self._fnn((n+1),xv, width_vac)
+
                 else:
                     hnm = self._fnm((n+1),(m+1),xr,width_b)
                     en = 0
-                    if width_vac != None:
-                        hnm += self._fnm(n,m,xv, width_vac)
+
                 temp.append(en+hnm)
             ham.append(temp)
 
@@ -107,16 +107,12 @@ class Hamiltonian(object):
         """Finds the mid points of the potential bariers.
 
         Returns: 
-            tuple of lists: The list of the barriers in the
-                middle of the well, the list of the barriers 
-                that define the vaccum region, the widths of the barriers
-                in the well and the widths of the vaccum region barriers.
+            tuple of lists: The list of the barriers in the well and a list 
+                of the widths of the barriers in the well.
         """
 
         xr = []
         width_b = []
-        xv = []
-        width_vac = []
         
         # We need to find the best number of divisions for the system
         # to make sure we aren't missing any bumps. For the average
@@ -130,45 +126,31 @@ class Hamiltonian(object):
         if min(temp) > 1:
             divs = 0.1
         else:
-            divs = min(temp)/2.0
+            divs = min(temp)/10.0
 
-            
         xs = np.arange(self.domain[0],self.domain[1]+divs,divs)
-
+        
         # Now we need to scan through the potential to find the bumps.
-        Vt = [self.pot(xs[0]),xs[0]]
+        Vt = [self.pot(xs[0])]
         for x in xs:
             if self.pot(x) > Vt[0]:
+                Vt.append(x)
+                xr.append(np.mean(Vt[1:]))
+                width_b.append(abs(Vt[-1]-Vt[1]))
                 Vt = [self.pot(x),x]
             elif self.pot(x) < Vt[0]:
-                if 0 in Vt:
-                    VL = Vt
-                else:
-                    xr.append(np.mean(Vt[1:]))
-                    width_b.append(abs(Vt[-1]-Vt[1]) + divs)
+                Vt.append(x)
+                xr.append(np.mean(Vt[1:]))
+                width_b.append(abs(Vt[-1]-Vt[1]))
+                Vt = [self.pot(x),x]
             else:
                 Vt.append(x)
-            VR = Vt
-        # If the ends are widder than the middle then we have a
-        # defined vaccum in those regions.
-        temp_width_vac = abs(VL[-1]) + divs
-        if temp_width_vac not in width_b and temp_width_vac*2 not in width_b:
-            xv.append(VL[-1]-VL[-1]/1000)
-            xv.append(VR[1])
-            width_vac.append(VL[-1])
-            width_vac.append(VR[1])
-        elif temp_width_vac*2 not in width_b:
-            xr.append(np.mean(VL[1:]))
-            width_b.append(abs(VL[-1]-VL[1]) + divs)
-            xr.append(np.mean(VR[1:]))
-            width_b.append(abs(VR[-1] - VR[1])+divs)
-        else:
-            xr.append(VL[1])
-            width_b.append(abs(VL[-1]-VL[1]) + divs)
-            xr.append(VR[-1])
-            width_b.append(abs(VR[-1] - VR[1])+divs)
 
-        return xr, xv, width_b, width_vac
+        if len(Vt) > 2:
+            xr.append(np.mean(Vt[1:]))
+            width_b.append(abs(Vt[-1]-Vt[1]))
+
+        return xr, width_b
         
 
     def _fnn(self,n, xr, b):
@@ -211,11 +193,12 @@ class Hamiltonian(object):
         """
         hnm = 0
         L = abs(self.domain[1] - self.domain[0])
+
         for x_i in range(len(xr)):
             spb = xr[x_i] + b[x_i]/2.
             smb = xr[x_i] - b[x_i]/2.
-            fnnp = np.sin((m-n)*np.pi*spb*L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*spb/L)/(np.pi*(n+m))
-            fnnm = np.sin((m-n)*np.pi*smb*L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*smb/L)/(np.pi*(n+m))
+            fnnp = np.sin((m-n)*np.pi*spb/L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*spb/L)/(np.pi*(n+m))
+            fnnm = np.sin((m-n)*np.pi*smb/L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*smb/L)/(np.pi*(n+m))
             hnm += self.pot(xr[x_i])*(fnnp-fnnm)
 
         return hnm
