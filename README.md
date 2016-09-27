@@ -8,3 +8,7 @@ Basis function expansion to quantum 1D wells.
 At present the code can only define a potential from a config
 file. The tested potentials can be found in the `potentials`
 directory.
+
+# API Documentation
+
+Hosted on [github pages](https://wsmorgan.github.io/basis/).
