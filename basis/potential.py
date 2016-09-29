@@ -142,3 +142,4 @@ class Potential(object):
                 msg.warn(wmsg.format(k,self.filepath))
 
         self._parse_regions()
+

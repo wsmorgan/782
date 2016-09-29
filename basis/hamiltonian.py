@@ -91,11 +91,11 @@ class Hamiltonian(object):
             temp = []
             for m in range(n_basis):
                 if n == m:
-                    hnm = self._fnn((n+1), xr, width_b)
+                    hnm = self._hnn((n+1), xr, width_b)
                     en = (np.pi**2)*((n+1)**2)/(abs(self.domain[1] -self.domain[0])**2)
 
                 else:
-                    hnm = self._fnm((n+1),(m+1),xr,width_b)
+                    hnm = self._hnm((n+1),(m+1),xr,width_b)
                     en = 0
 
                 temp.append(en+hnm)
@@ -153,7 +153,7 @@ class Hamiltonian(object):
         return xr, width_b
         
 
-    def _fnn(self,n, xr, b):
+    def _hnn(self,n, xr, b):
         """The value of the integral over the basis functions for each x in
         xr for the diagonals of the hamiltonian.
         
@@ -172,13 +172,11 @@ class Hamiltonian(object):
         for i_x in range(len(xr)):
             spb = xr[i_x] + b[i_x]/2.
             smb = xr[i_x] - b[i_x]/2.
-            fnnp = spb/L - np.sin(2*n*np.pi*spb/L)/(2*np.pi*n)
-            fnnm = smb/L - np.sin(2*n*np.pi*smb/L)/(2*np.pi*n)
-            hnm += self.pot(xr[i_x])*(fnnp-fnnm)
+            hnm += self.pot(xr[i_x])*(self._fnn(spb,n)-self._fnn(smb,n))
 
         return hnm
 
-    def _fnm(self, n, m, xr, b):
+    def _hnm(self, n, m, xr, b):
         """The value of the integral over the basis functions for each x in
         xr for the off diagonals of the hamiltonian.
         
@@ -197,8 +195,21 @@ class Hamiltonian(object):
         for x_i in range(len(xr)):
             spb = xr[x_i] + b[x_i]/2.
             smb = xr[x_i] - b[x_i]/2.
-            fnnp = np.sin((m-n)*np.pi*spb/L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*spb/L)/(np.pi*(n+m))
-            fnnm = np.sin((m-n)*np.pi*smb/L)/((m-n)*np.pi) - np.sin((n+m)*np.pi*smb/L)/(np.pi*(n+m))
-            hnm += self.pot(xr[x_i])*(fnnp-fnnm)
+            hnm += self.pot(xr[x_i])*(self._fnm(spb,n,m)-self._fnm(smb,n,m))
 
         return hnm
+
+    def _fnn(self,x,n):
+        L = abs(self.domain[1] - self.domain[0])
+
+        result = x/L-np.sin(2*np.pi*n*x/L)/(2*np.pi*n)
+        return result
+
+    def _fnm(self,x,n,m):
+        L = abs(self.domain[1] - self.domain[0])
+
+        sin1 = np.sin((m-n)*np.pi*x/L)/(np.pi*(m-n))
+        sin2 = np.sin((m+n)*np.pi*x/L)/(np.pi*(m+n))
+
+        result = sin1-sin2
+        return result

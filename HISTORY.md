@@ -1,5 +1,10 @@
 # Revision History for "782"
 
+## Revision 0.0.6
+
+- Added several plotting options for the reproduction of the paper.
+- Added an outputs/ folder for storing outputs that we want to keep track of.
+
 ## Revision 0.0.5
 
 - Fixed another issue in hamiltonian.py to generalize the construction

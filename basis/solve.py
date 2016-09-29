@@ -1,8 +1,10 @@
 #!/usr/bin/python
 from basis import msg
 from basis.hamiltonian import Hamiltonian
+import numpy as np
+import matplotlib.pyplot as plt
 
-def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = False, outfile=None):
+def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = None, outfile=None):
     """Solves the system for the given potential and the desired number of
     basis functions. Output is written to file.
 
@@ -36,9 +38,42 @@ def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = F
 
             outf.write(" ".join(temp)+"\n")
 
-    if plot_f:
-        pass # pragma: no cover
+    L = abs(ham.domain[1] - ham.domain[0])
+    if plot_f == "pot": # pragma: no cover
+        xs = np.arange(ham.domain[0],ham.domain[1],0.01)
+        Vs = list(map(ham.pot,xs))
+        plt.plot(xs,Vs)
+        plt.show()
 
+    elif plot_f == "waves": # pragma: no cover
+        for i in range(3):
+            wave = eigen_vecs[i]
+            xs = np.arange(ham.domain[0],ham.domain[1],0.01)
+            psi_x = []
+            for x in xs:
+                sin_x = 0
+                for n in range(len(wave)):
+                    sin_x += wave[n]*np.sqrt(2./L)*np.sin((n+1)*np.pi*x/L)
+                psi_x.append(sin_x)
+            plt.plot(xs,psi_x)
+            
+        plt.show()
+
+    elif plot_f =="en": # pragma: no cover
+        ens = []
+        ks = []
+        squ_well = []
+        for n in range(35):
+            ens.append(eigen_vals[n]/(np.pi**2))
+            ks.append(n/L)
+            squ_well.append(n*n/(L**2))
+            
+        plt.plot(ks[:-1],ens[:-1],'ro')
+        plt.plot(ks,squ_well)
+        plt.xlim((0.,3.))
+        plt.ylim((0.,10.))
+        plt.show()
+    
 def examples():
 
     """Prints examples of using the script to the console using colored output.
@@ -66,8 +101,8 @@ def examples():
 script_options = {
     "N": dict(default=100, type=int,
               help=("Specifies the number of basis function to be used.")),
-    "-plot": dict(action="store_true",
-                  help=("Plot the solution.")),
+    "-plot": dict(help=("Plot the potential (pot), the wave functions (wave), "
+                        "the energies (en).")),
     "-potential": dict(help=("Path to the file that has the potential parameters.")),
     "-outfile": dict(default="output.dat",
                      help="Override the default output file nome."),
@@ -98,6 +133,9 @@ def _parser_options():
     if args is None:
         return
 
+    if args["plot"] != None:
+        args["plot"] = args["plot"].lower()
+    
     return args
 
 def run(args):
@@ -107,7 +145,7 @@ def run(args):
 
     elif args["plot"]:
         _solve_system(args["potential"], args["N"], args["solutions"], xl=args["left_edge"]
-                      ,xr=args["right_edge"], outfile = args["outfile"], plot_f = True)
+                      ,xr=args["right_edge"], outfile = args["outfile"], plot_f = args["plot"])
     else:
         _solve_system(args["potential"], args["N"], args["solutions"], xl=args["left_edge"]
                       ,xr=args["right_edge"], outfile = args["outfile"])
