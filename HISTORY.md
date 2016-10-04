@@ -1,5 +1,9 @@
 # Revision History for "782"
 
+## Revision 0.0.7
+
+- Fixed the eigenvectors so that they are properly transposed.
+
 ## Revision 0.0.6
 
 - Added several plotting options for the reproduction of the paper.

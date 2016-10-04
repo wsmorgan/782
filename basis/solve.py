@@ -146,7 +146,7 @@ def run(args):
     if not args["potential"]:
         raise KeyError("A potential file must be provided using the -potential flag.")
 
-    elif args["plot"]:
+    elif args["plot"]: # pragma: no cover
         _solve_system(args["potential"], args["N"], args["solutions"], xl=args["left_edge"]
                       ,xr=args["right_edge"], outfile = args["outfile"], plot_f = args["plot"])
     else:

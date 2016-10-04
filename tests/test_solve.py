@@ -45,10 +45,10 @@ def test_run(capfd):
     assert  temp2 == temp
     os.system("rm test_output.dat")
 
-    argv = ["py.test", "2", "-potential", "potentials/bump_2.cfg","-outfile",'test_output.dat',"-solutions","2","-plot","pot"]
-    args = get_sargs(argv)
-    run(args)
-    os.system("rm test_output.dat")
+    # argv = ["py.test", "2", "-potential", "potentials/bump_2.cfg","-outfile",'test_output.dat',"-solutions","2","-plot","pot"]
+    # args = get_sargs(argv)
+    # run(args)
+    # os.system("rm test_output.dat")
 
     argv = ["py.test", "2"]
     args = get_sargs(argv)
