@@ -26,7 +26,7 @@ def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = N
 
     ham = Hamiltonian(potcfg, n_basis, xl, xr)
     eigen_vals = ham.eigenvals[:n_solutions]
-    eigen_vecs = ham.eigenvecs[:n_solutions]
+    eigen_vecs = np.transpose(ham.eigenvecs[:n_solutions])
 
     with open(outfile,"w+") as outf:
         outf.write("Eigenval      Eigenvec\n")
@@ -43,21 +43,24 @@ def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = N
         xs = np.arange(ham.domain[0],ham.domain[1],0.01)
         Vs = list(map(ham.pot,xs))
         plt.plot(xs,Vs)
-        plt.show()
+        plt.savefig('pot.pdf')
 
     elif plot_f == "waves": # pragma: no cover
-        for i in range(3):
+        for i in [0,9]:
             wave = eigen_vecs[i]
             xs = np.arange(ham.domain[0],ham.domain[1],0.01)
             psi_x = []
+            env = []
             for x in xs:
                 sin_x = 0
                 for n in range(len(wave)):
                     sin_x += wave[n]*np.sqrt(2./L)*np.sin((n+1)*np.pi*x/L)
+                env.append(np.sin(x*np.pi*(i+1)/L))
                 psi_x.append(sin_x)
             plt.plot(xs,psi_x)
+            plt.plot(xs,env)
             
-        plt.show()
+        plt.savefig('waves.pdf')
 
     elif plot_f =="en": # pragma: no cover
         ens = []
@@ -72,7 +75,7 @@ def _solve_system(potcfg, n_basis, n_solutions, xl = None, xr = None, plot_f = N
         plt.plot(ks,squ_well)
         plt.xlim((0.,3.))
         plt.ylim((0.,10.))
-        plt.show()
+        plt.savefig('energy.pdf')
     
 def examples():
 
